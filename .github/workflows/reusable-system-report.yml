@@ -39,7 +39,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Bash system checksshell: bash
+      - name: Bash system checks
+        shell: bash
         run: |
           set -euo pipefail
           echo "Runner: $(hostname)"

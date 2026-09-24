@@ -1,0 +1,15 @@
+name: Practical 4 - Matrix Caller
+on:
+  workflow_dispatch:
+jobs:
+  compatibility:
+    strategy:
+      fail-fast: false
+      matrix:
+        node: ["20", "22"]
+    uses: ./.github/workflows/reusable-system-report.yml
+    with:
+      install_node_packages: true
+      node_version: ${{ matrix.node }}
+      custom_message: "Compatibility test on Node ${{ matrix.node }}"
+      report_name: "node-${{ matrix.node }}-report.html"

@@ -1,0 +1,23 @@
+name: Practical 5 - Full Installation Report
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+jobs:
+  full-report:
+    uses: ./.github/workflows/reusable-system-report.yml
+    with:
+      install_nginx: true
+      install_node_packages: true
+      node_version: "22"
+      custom_message: "Practical 5 - Complete CI installation evidence"
+      report_name: "complete-installation-report.html"
+  consume-result:
+    needs: full-report
+    runs-on: ubuntu-latest
+    steps:
+      - name: Display reusable workflow output
+        shell: bash
+        run: |
+          echo "Reusable workflow generated:"
+          echo "${{ needs.full-report.outputs.report_file }}"

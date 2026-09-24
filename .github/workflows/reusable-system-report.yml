@@ -1,0 +1,129 @@
+name: Reusable System Report
+on:
+  workflow_call:
+    inputs:
+      install_nginx:
+        description: "Install Nginx"
+        required: false
+        type: boolean
+        default: false
+      install_node_packages:
+        description: "Run npm install"
+        required: false
+        type: boolean
+        default: false
+      node_version:
+        description: "Node.js version"
+        required: false
+        type: string
+        default: "22"
+      report_name:
+        description: "HTML report file name"
+        required: false
+        type: string
+        default: "system-report.html"
+      custom_message:
+        description: "Message displayed in the report"
+        required: false
+        type: string
+        default: "Reusable workflow execution"
+    outputs:
+      report_file:
+        description: "Generated report file"
+        value: ${{ jobs.build-report.outputs.report_file }}
+jobs:
+  build-report:
+    runs-on: ubuntu-latest
+    outputs:
+      report_file: ${{ steps.result.outputs.report_file }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Bash system checksshell: bash
+        run: |
+          set -euo pipefail
+          echo "Runner: $(hostname)"
+          echo "Kernel: $(uname -a)"
+          echo "User: $(whoami)"
+          echo "Disk:"
+          df -h
+          echo "Memory:"
+          free -h
+      - name: Install Nginx
+        if: ${{ inputs.install_nginx }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y nginx
+          nginx -v
+          dpkg -l | grep -E '^ii\s+nginx' || true
+      - name: Setup Node.js
+        if: ${{ inputs.install_node_packages }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ inputs.node_version }}
+          cache: npm
+      - name: Install npm packages
+        if: ${{ inputs.install_node_packages }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci
+          npm list --depth=0 || true
+      - name: Generate HTML report
+        shell: bash
+        run: |
+          set -euo pipefail
+          NGINX_VERSION="Not installed"
+          NGINX_PACKAGES="Not installed"
+          if command -v nginx >/dev/null 2>&1; then
+            NGINX_VERSION="$(nginx -v 2>&1)"
+            NGINX_PACKAGES="$(dpkg-query -W -f='${Package} ${Version}\n' 'nginx*' 2>/dev/null || true)"
+          fi
+          NODE_VERSION="$(node --version 2>/dev/null || echo 'Not installed')"
+          NPM_VERSION="$(npm --version 2>/dev/null || echo 'Not installed')"
+          NPM_PACKAGES="$(npm list --depth=0 2>&1 || true)"
+          cat > "${{ inputs.report_name }}" <<EOF
+          <!doctype html>
+          <html>
+          <head>
+            <meta charset="utf-8">
+            <title>GitHub Actions Installation Report</title>
+            <style>
+              body { font-family: Arial, sans-serif; margin: 30px; }
+              table { border-collapse: collapse; width: 100%; }
+              th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+              th { background: #f2f2f2; }
+              pre { background: #f7f7f7; padding: 12px; overflow: auto; }
+            </style>
+          </head>
+          <body>
+            <h1>GitHub Actions Installation Report</h1>
+            <p><b>Message:</b> ${{ inputs.custom_message }}</p>
+            <table>
+              <tr><th>Item</th><th>Details</th></tr>
+              <tr><td>Runner OS</td><td>$(uname -srm)</td></tr>
+              <tr><td>Nginx</td><td>${NGINX_VERSION}</td></tr>
+              <tr><td>Node.js</td><td>${NODE_VERSION}</td></tr>
+              <tr><td>npm</td><td>${NPM_VERSION}</td></tr>
+              <tr><td>Generated UTC</td><td>$(date -u)</td></tr>
+            </table>
+            <h2>Installed Nginx Packages</h2>
+            <pre>${NGINX_PACKAGES}</pre>
+            <h2>Top-level npm Packages</h2><pre>${NPM_PACKAGES}</pre>
+          </body>
+          </html>
+          EOF
+          echo "Generated ${{ inputs.report_name }}"
+      - name: Publish reusable-workflow output
+        id: result
+        shell: bash
+        run: |
+          echo "report_file=${{ inputs.report_name }}" >> "$GITHUB_OUTPUT"
+      - name: Upload HTML report
+        uses: actions/upload-artifact@v4
+        with:
+          name: installation-report
+          path: ${{ inputs.report_name }}
+          if-no-files-found: error

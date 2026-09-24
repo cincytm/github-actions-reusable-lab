@@ -1,0 +1,10 @@
+name: Practical 2 - Nginx Caller
+on:
+  workflow_dispatch:
+jobs:
+  nginx-validation:
+    uses: ./.github/workflows/reusable-system-report.yml
+    with:
+      install_nginx: true
+      custom_message: "Practical 2 - Install and inspect Nginx"
+      report_name: "nginx-installation-report.html"

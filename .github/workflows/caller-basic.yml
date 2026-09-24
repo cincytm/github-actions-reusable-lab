@@ -1,0 +1,9 @@
+name: Practical 1 - Basic Bash Caller
+on:
+  workflow_dispatch:
+jobs:
+  call-reusable-workflow:
+    uses: ./.github/workflows/reusable-system-report.yml
+    with:
+      custom_message: "Practical 1 - Bash diagnostics only"
+      report_name: "practical-1-report.html"

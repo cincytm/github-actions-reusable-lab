@@ -70,7 +70,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          npm ci
+          # npm ci
+          npm install
           npm list --depth=0 || true
       - name: Generate HTML report
         shell: bash

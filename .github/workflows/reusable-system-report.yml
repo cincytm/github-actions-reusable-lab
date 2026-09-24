@@ -64,7 +64,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ inputs.node_version }}
-          cache: npm
+          # cache: npm
       - name: Install npm packages
         if: ${{ inputs.install_node_packages }}
         shell: bash

@@ -1,0 +1,11 @@
+name: Practical 3 - Node and npm Caller
+on:
+  workflow_dispatch:
+jobs:
+  node-validation:
+    uses: ./.github/workflows/reusable-system-report.yml
+    with:
+      install_node_packages: true
+      node_version: "22"
+      custom_message: "Practical 3 - npm dependency validation"
+      report_name: "npm-report.html"
